@@ -125,10 +125,6 @@ public class ProjectsPanel : Panel
             }
         }
 
-        if (CentralStore.Settings.EnableAutoScan) {
-            ScanForProjects();
-        }
-
         _topBorder = _scrollContainer.RectGlobalPosition.y + _borderSize;
         _bottomBorder = _scrollContainer.RectSize.y - _borderSize;
 
@@ -283,7 +279,7 @@ public class ProjectsPanel : Panel
 		return added;
 	}
 
-    private async void ScanForProjects() {
+    public async void ScanForProjects(bool autoScan = false) {
         Array<string> projects = new Array<string>();
         Array<string> scanDirs = CentralStore.Settings.ScanDirs.Duplicate();
         int i = 0;
@@ -328,7 +324,10 @@ public class ProjectsPanel : Panel
 
 		AppDialogs.BusyDialog.HideDialog();
         if (addedTask.Result.Count == 0)
-            AppDialogs.MessageDialog.ShowMessage(Tr("Scan Projects"), Tr("No new projects found."));
+        {
+            if (!autoScan)
+                AppDialogs.MessageDialog.ShowMessage(Tr("Scan Projects"), Tr("No new projects found."));
+        }
         else
         {
             AppDialogs.MessageDialog.ShowMessage(Tr("Scan Projects"),

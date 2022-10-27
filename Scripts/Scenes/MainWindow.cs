@@ -12,6 +12,7 @@ public class MainWindow : Control
 	ColorRect _sidebar = null;
 	Array<PageButton> _buttons;
 	[NodePath("bg/Shell/VC/TabContainer")] TabContainer _notebook = null;
+	[NodePath("bg/Shell/VC/TabContainer/Projects")] ProjectsPanel _projectsPanel = null;
 
 	public MainWindow() {
 		if (!CentralStore.Instance.LoadDatabase()) {
@@ -65,6 +66,11 @@ public class MainWindow : Control
 		{
 			AppDialogs.FirstRunWizard.ShowDialog();
 			//AppDialogs.FirstTimeInstall.Visible = true;
+		}
+
+		if (CentralStore.Settings.EnableAutoScan)
+		{
+			_projectsPanel.ScanForProjects(true);
 		}
 	}
 
