@@ -70,6 +70,37 @@ public static class Util
 
 	public static bool IsDirEmpty(this string path) => !Dir.Exists(path) || !Dir.EnumerateFileSystemEntries(path).Any();
 
+	public static string GetUserFolder(params string[] parts)
+	{
+		var path = "user://";
+		if (OS.GetExecutablePath().GetFile().StartsWith("GodotManager"))
+		{
+			if (SFile.Exists(OS.GetExecutablePath().GetBaseDir().Join("._sc_")) ||
+			    SFile.Exists(OS.GetExecutablePath().GetBaseDir().Join("_sc_")))
+			{
+				path = OS.GetExecutablePath().GetBaseDir().Join("godot_data");
+			}
+		}
+
+		return parts.Length == 0 ? path : path.Join(parts);
+	}
+	
+	public static string GetDatabaseFile()
+	{
+		var path = GetUserFolder("central_store.json");
+		if (OS.GetExecutablePath().GetFile().StartsWith("GodotManager"))
+		{
+			if (SFile.Exists(OS.GetExecutablePath().GetBaseDir().Join("._sc_")) ||
+			    SFile.Exists(OS.GetExecutablePath().GetBaseDir().Join("_sc_")))
+			{
+				if (!Dir.Exists(path.GetBaseDir()))
+					Dir.CreateDirectory(path.GetBaseDir());
+			}
+		}
+
+		return path;
+	}
+
 	public static void CopyDirectory(string sourceDir, string destinationDir, bool recursive = false) {
 		var dir = new DirectoryInfo(sourceDir);
 
@@ -245,13 +276,13 @@ public static class Util
 			return Which("kdesudo");
 		return Which("sudo");
 	}
-	public static int PkExec(string command)
+	public static int PkExec(string command, string shortDesc, string longDesc)
 	{
 		string pkexec = FindPkExec();
 		if (pkexec == null)
 		{
 			GD.Print("Failed to find suitable Set-User command!");
-			return -127;
+			return 127;
 		}
 
 		Array<string> args = new Array<string>();
@@ -265,12 +296,12 @@ public static class Util
 		{
 			args.Add("--preserve-env");
 			args.Add("--sudo-mode");
-			args.Add("--description 'Install Shortcut'");
+			args.Add($"--description '{shortDesc}'");
 		}
 
 		if (pkexec.Contains("kdesudo"))
 		{
-			args.Add($"--comment '{dummy.Tr("Godot Manager needs Administrative privileges to complete the requested actions.")}'");
+			args.Add($"--comment '{longDesc}'");
 		}
 
 		if (pkexec.Contains("sudo") && !(pkexec.Contains("gksudo") || pkexec.Contains("kdesudo")))
@@ -282,7 +313,7 @@ public static class Util
 		return OS.Execute(pkexec, args.ToArray(), true);
 	}
 
-	public static int XdgDesktopMenu(string desktopFile)
+	public static int XdgDesktopInstall(string desktopFile)
 	{
 		string xdg_desktop_menu = Which("xdg-desktop-menu");
 		if (xdg_desktop_menu == null)
@@ -295,7 +326,20 @@ public static class Util
 			new string[] { "install", "--mode", "user", desktopFile }, true);
 	}
 
-	public static int XdgDesktopMenuUpdate()
+	public static int XdgDesktopUninstall(string desktopFile)
+	{
+		string xdg_desktop_menu = Which("xdg-desktop-menu");
+		if (xdg_desktop_menu == null)
+		{
+			GD.Print("Failed to find XDG Desktop Menu Command, unable to uninstall Desktop entry.");
+			return -127;
+		}
+
+		return OS.Execute(xdg_desktop_menu,
+			new string[] { "uninstall", "--mode", "user", desktopFile }, true);
+	}
+
+	public static int XdgDesktopUpdate()
 	{
 		string xdg_desktop_menu = Which("xdg-desktop-menu");
 		if (xdg_desktop_menu == null)

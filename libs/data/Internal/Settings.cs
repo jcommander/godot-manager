@@ -31,6 +31,11 @@ public class Settings : Object {
 	[JsonProperty] public int ProxyPort;
 	[JsonProperty] public Array<string> ScanDirs;
 	[JsonProperty] public Array<Dictionary<string, string>> AssetMirrors;
+	[JsonProperty] public Array<string> SettingsShare;
+#if GODOT_X11 || GODOT_LINUXBSD
+	[JsonProperty] public bool ShortcutMade;
+	[JsonProperty] public bool ShortcutRoot;
+#endif
 
 	[JsonProperty] public Dictionary<string, string> CurrentAssetMirror;
 	[JsonProperty] public int LastEngineMirror;
@@ -42,8 +47,8 @@ public class Settings : Object {
 	public Settings() {
 		ProjectPath = OS.GetSystemDir(OS.SystemDir.Documents).Join("Projects").NormalizePath();
 		DefaultEngine = Guid.Empty.ToString();
-		EnginePath = "user://versions";
-		CachePath = "user://cache";
+		EnginePath = Util.GetUserFolder("versions"); //"user://versions";
+		CachePath = Util.GetUserFolder("cache"); //"user://cache");
 		LastView = Tr("List View");
 		DefaultView = Tr("List View");
 		CheckForUpdates = true;
@@ -64,9 +69,14 @@ public class Settings : Object {
 		ProxyHost = "localhost";
 		ProxyPort = 8000;
 		AssetMirrors = new Array<Dictionary<string, string>>();
+#if GODOT_X11 || GODOT_LINUXBSD
+		ShortcutMade = false;
+		ShortcutRoot = false;
+#endif
 		CurrentAssetMirror = new Dictionary<string, string>();
 		LastEngineMirror = 0;
 		LocalAddonCount = 0;
+		SettingsShare = new Array<string>();
 	}
 
 	public void SetupDefaultValues() {

@@ -194,7 +194,7 @@ public class GodotInstaller : Object {
 		if (_version.IsMono)
 			instDir = instDir.GetBaseDir();
 #endif
-		ZipFile.ExtractToDirectory(_version.CacheLocation,instDir);
+		ZipFile.ExtractToDirectory(_version.CacheLocation, ProjectSettings.GlobalizePath(instDir));
 
 		Array<string> fileList = new Array<string>();
 		using (ZipArchive za = ZipFile.OpenRead(_version.CacheLocation.GetOSDir().NormalizePath())) {
@@ -246,7 +246,7 @@ public class GodotInstaller : Object {
 		}
 	}
 
-	internal Array<string> RecurseDirectory(string path) {
+	public static Array<string> RecurseDirectory(string path) {
 		Array<string> files = new Array<string>();
 		foreach(string dir in SDirectory.EnumerateDirectories(path)) {
 			foreach(string file in RecurseDirectory(FPath.Combine(path,dir).NormalizePath())) {

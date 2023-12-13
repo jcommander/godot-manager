@@ -18,6 +18,7 @@ public class GodotVersion : Object {
 	[JsonProperty] public GithubVersion GithubVersion;
 	[JsonProperty] public MirrorVersion MirrorVersion;
 	[JsonProperty] public CustomEngineDownload CustomEngine;
+	[JsonProperty] public string SharedSettings;
 
 	public GodotVersion() {
 		Id = Guid.Empty.ToString();
@@ -26,7 +27,10 @@ public class GodotVersion : Object {
 		Url = "";
 		DownloadedDate = DateTime.MinValue;
 		HideConsole = false;
+		SharedSettings = string.Empty;
 	}
+
+	public bool IsGodot4() => Tag.StartsWith("4") || Tag.StartsWith("v4");
 
 	public string GetDisplayName() {
 		return $"Godot {Tag + (IsMono ? " - Mono" : "")}";

@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Godot.Collections;
 using Godot.Sharp.Extras;
@@ -42,11 +43,17 @@ public class CreateProject : ReferenceRect
     [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/GodotVersion")]
     OptionButton _godotVersion = null;
 
-    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/VBoxContainer/GLES3")]
+    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/GLES3/GLES3")]
     CheckBox _gles3 = null;
+    
+    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/GLES3/GLES3Desc")]
+    Label _gles3Desc = null;
 
-    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/VBoxContainer2/GLES2")]
+    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/GLES2/GLES2")]
     CheckBox _gles2 = null;
+    
+    [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Settings/HBoxContainer3/GLES2/GLES2Desc")]
+    Label _gles2Desc = null;
 
     [NodePath("PC/CC/P/VB/MCContent/TabContainer/Project Plugins/ScrollContainer/List")]
     VBoxContainer _pluginList = null;
@@ -172,31 +179,49 @@ public class CreateProject : ReferenceRect
             AppDialogs.BrowseFolderDialog.Disconnect("dir_selected", this, "OnDirSelected");
     }
 
+    [SignalHandler("toggled", nameof(_useGodot3))]
+    void OnToggled_UseGodot3(bool toggle)
+    {
+        _gles3.Text = Tr("OpenGL ES 3.0");
+        _gles2.Text = Tr("OpenGL ES 2.0");
+        _gles3Desc.Text = Tr(@"Higher Visual Quality
+All Features available
+Incompatible with older hardware
+Not recommended for web games");
+        _gles2Desc.Text = Tr(@"Lower Visual Quality
+Some Features not available
+Works on most hardware
+Recommended for web games");
+        PopulateEngines();
+    }
+
+    [SignalHandler("toggled", nameof(_useGodot4))]
+    void OnToggled_UseGodot4(bool toggle)
+    {
+        _gles3.Text = Tr("Forward+");
+        _gles2.Text = Tr("Mobile");
+        _gles3Desc.Text = Tr(@"Supports desktop platforms only.
+Advanced 3D graphics available.
+Can scale to large complex scenes.
+Slower rendering of simple scenes.");
+        _gles2Desc.Text = Tr(@"Supports desktop + mobile platforms.
+Less advanced 3D graphics.
+Less scalable for complex scenes.
+Faster rendering of simple scenes.");
+        PopulateEngines();
+    }
+
     [SignalHandler("pressed", nameof(_cancelBtn))]
     void OnCancelPressed() {
         Visible = false;
     }
 
     public void ShowDialog() {
-        int defaultGodot = -1;
         _projectName.Text = "Untitled Project";
         _projectLocation.Text = CentralStore.Settings.ProjectPath;
         TestPath(CentralStore.Settings.ProjectPath);
-
-        _godotVersion.Clear();
-        foreach(GodotVersion version in CentralStore.Versions) {
-            string gdName = version.GetDisplayName();
-            int indx = CentralStore.Versions.IndexOf(version);
-            if (version.Id == (string)CentralStore.Settings.DefaultEngine) {
-                defaultGodot = indx;
-                gdName += " (Default)";
-            }
-            _godotVersion.AddItem(gdName, indx);
-            _godotVersion.SetItemMetadata(indx, version.Id);
-        }
-
-        if (defaultGodot != -1)
-            _godotVersion.Select(defaultGodot);
+        
+        PopulateEngines(true);
 
         _gles3.Pressed = true;
         _gles2.Pressed = false;
@@ -229,6 +254,47 @@ public class CreateProject : ReferenceRect
         
         
         Visible = true;
+    }
+
+    private void PopulateEngines(bool updateUse = false)
+    {
+        int defaultGodot = -1;
+        if (CentralStore.Settings.DefaultEngine != Guid.Empty.ToString())
+        {
+            var defaultEngine = CentralStore.Instance.GetVersion(CentralStore.Settings.DefaultEngine);
+            if (defaultEngine != null)
+            {
+                if (updateUse)
+                {
+                    if (defaultEngine.IsGodot4())
+                    {
+                        _useGodot4.Pressed = true;
+                    }
+                }
+            }
+        }
+
+        _godotVersion.Clear();
+        var indx = 0;
+        foreach (GodotVersion version in CentralStore.Versions)
+        {
+            if (_useGodot4.Pressed == version.IsGodot4())
+            {
+                string gdName = version.GetDisplayName();
+                if (version.Id == (string)CentralStore.Settings.DefaultEngine)
+                {
+                    defaultGodot = indx;
+                    gdName += " (Default)";
+                }
+
+                _godotVersion.AddItem(gdName, indx);
+                _godotVersion.SetItemMetadata(indx, version.Id);
+                indx++;
+            }
+        }
+
+        if (defaultGodot != -1)
+            _godotVersion.Select(defaultGodot);
     }
 
     [SignalHandler("text_changed", nameof(_projectLocation))]
